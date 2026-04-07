@@ -126,18 +126,22 @@
     #btn-stop.active  { border-color: #e05252; color: #e05252; background: #1f0d0d; }
 
     .noise-row { display: flex; align-items: center; gap: 0.7rem; }
-    #noise-slider {
+    .ctrl-slider {
       -webkit-appearance: none; appearance: none;
       width: 120px; height: 4px; border-radius: 2px;
-      background: linear-gradient(to right, #4caf7d 0%, #e05252 100%);
+      background: #2a3550;
       outline: none; cursor: pointer;
     }
-    #noise-slider::-webkit-slider-thumb {
+    .ctrl-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 14px; height: 14px; border-radius: 50%;
       background: #c9d1e0; border: 2px solid #0f1525; cursor: pointer;
     }
+    #noise-slider {
+      background: linear-gradient(to right, #4caf7d 0%, #e05252 100%);
+    }
     #noise-val { min-width: 3.2em; color: #a0b4d0; font-weight: 600; }
+    #qubits-val, #iters-val { min-width: 1.6em; color: #a0b4d0; font-weight: 600; }
 
     /* Leaderboard */
     #leaderboard {
@@ -237,8 +241,18 @@
       <button class="ctrl-btn" id="btn-stop">Stop</button>
       <div class="noise-row">
         <label for="noise-slider">Gate noise:</label>
-        <input type="range" id="noise-slider" min="0" max="50" step="1" value="0" />
+        <input type="range" id="noise-slider" class="ctrl-slider" min="0" max="50" step="1" value="0" />
         <span id="noise-val">0%</span>
+      </div>
+      <div class="noise-row">
+        <label for="qubits-slider">Qubits:</label>
+        <input type="range" id="qubits-slider" class="ctrl-slider" min="2" max="7" step="1" value="5" />
+        <span id="qubits-val">5</span>
+      </div>
+      <div class="noise-row">
+        <label for="iters-slider">Iterations:</label>
+        <input type="range" id="iters-slider" class="ctrl-slider" min="1" max="12" step="1" value="4" />
+        <span id="iters-val">4</span>
       </div>
     </div>
   </div>
@@ -252,7 +266,7 @@
 </div>
 
 <footer>
-  Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; 5 qubits / 4 iterations
+  Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; <span id="footer-params">5 qubits / 4 iterations</span>
 </footer>
 
 <script>
@@ -472,6 +486,13 @@ function connect() {
       document.getElementById('noise-badge-val').textContent = noisePct + '%';
       document.getElementById('noise-badge-val').style.color =
         noisePct === 0 ? '#4caf7d' : noisePct < 20 ? '#e0a832' : '#e05252';
+      // Sync qubit / iter sliders from server state
+      document.getElementById('qubits-slider').value = msg.n_qubits;
+      document.getElementById('qubits-val').textContent = msg.n_qubits;
+      document.getElementById('iters-slider').value = msg.n_iter;
+      document.getElementById('iters-val').textContent = msg.n_iter;
+      document.getElementById('footer-params').textContent =
+        `${msg.n_qubits} qubits / ${msg.n_iter} iterations`;
       setStatus(msg.status);
       pendingEntry = null;
       document.getElementById('name-row').style.display = 'none';
@@ -554,6 +575,24 @@ noiseSlider.addEventListener('input', () => {
 });
 noiseSlider.addEventListener('change', () => {
   send({ noise: parseInt(noiseSlider.value) / 100 });
+});
+
+const qubitsSlider = document.getElementById('qubits-slider');
+const qubitsValEl  = document.getElementById('qubits-val');
+qubitsSlider.addEventListener('input', () => {
+  qubitsValEl.textContent = qubitsSlider.value;
+});
+qubitsSlider.addEventListener('change', () => {
+  send({ n_qubits: parseInt(qubitsSlider.value) });
+});
+
+const itersSlider = document.getElementById('iters-slider');
+const itersValEl  = document.getElementById('iters-val');
+itersSlider.addEventListener('input', () => {
+  itersValEl.textContent = itersSlider.value;
+});
+itersSlider.addEventListener('change', () => {
+  send({ n_iter: parseInt(itersSlider.value) });
 });
 
 connect();
