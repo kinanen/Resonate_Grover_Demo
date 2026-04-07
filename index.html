@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grover's Algorithm — Quantum Oracle Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #0a0e1a;
+      color: #c9d1e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    header h1 {
+      font-size: 1.6rem; font-weight: 700;
+      letter-spacing: 0.04em; color: #e8eaf6;
+    }
+    header p { margin-top: 0.4rem; font-size: 0.8rem; color: #7986a0; }
+
+    /* Status bar */
+    #status-bar {
+      display: flex; gap: 1.2rem; align-items: center;
+      flex-wrap: wrap; justify-content: center;
+      margin-bottom: 1.5rem; font-size: 0.78rem;
+    }
+    .badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: #131828; border: 1px solid #1e2a40;
+      border-radius: 6px; padding: 0.35rem 0.8rem;
+    }
+    .stat-label { color: #556; }
+    .stat-value { color: #a0b4d0; font-weight: 600; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #444; transition: background 0.3s;
+    }
+    .dot.connected    { background: #4caf7d; box-shadow: 0 0 6px #4caf7d88; }
+    .dot.disconnected { background: #e05252; }
+    .dot.flash        { background: #7c4dff; box-shadow: 0 0 8px #7c4dffaa; }
+
+    #penalty-badge { display: none; }
+    #penalty-badge.visible { display: flex; border-color: #e05252; }
+    #penalty-val { color: #e05252; font-weight: 700; min-width: 1.6em; text-align: right; }
+
+    /* Main row */
+    #main-row {
+      display: flex;
+      gap: 1.2rem;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 1160px;
+      justify-content: center;
+    }
+
+    /* Chart side */
+    #left-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 1rem; }
+
+    #chart-wrap {
+      background: #0f1525; border: 1px solid #1e2a40;
+      border-radius: 12px; padding: 1.5rem 1.5rem 1rem;
+      position: relative;
+    }
+    #chart-wrap canvas { cursor: crosshair; }
+
+    /* Result overlay */
+    #result-overlay {
+      display: none; position: absolute; inset: 0;
+      border-radius: 12px; align-items: center;
+      justify-content: center; flex-direction: column;
+      gap: 0.6rem; pointer-events: none;
+    }
+    #result-overlay.show { display: flex; pointer-events: all; }
+    #result-overlay.win  { background: rgba(10,20,10,0.55); }
+    #result-text { font-size: 2rem; font-weight: 700; letter-spacing: 0.06em; }
+    #result-overlay.win #result-text { color: #4caf7d; text-shadow: 0 0 20px #4caf7d88; }
+    #result-sub { font-size: 0.85rem; color: #7986a0; }
+    #name-row {
+      display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem;
+    }
+    #name-input {
+      background: #0a1a10; border: 1px solid #4caf7d88; border-radius: 5px;
+      color: #4caf7d; font-family: inherit; font-size: 1rem; font-weight: 700;
+      text-align: center; text-transform: uppercase; letter-spacing: 0.15em;
+      width: 4rem; padding: 0.3rem 0.2rem; outline: none;
+    }
+    #name-input::placeholder { color: #1e4a2a; letter-spacing: 0.1em; }
+    #name-submit {
+      background: #0d1f18; border: 1px solid #4caf7d; border-radius: 5px;
+      color: #4caf7d; font-family: inherit; font-size: 0.78rem;
+      padding: 0.3rem 0.7rem; cursor: pointer; pointer-events: all;
+    }
+    #name-submit:hover { background: #4caf7d; color: #0a0e1a; }
+
+    /* Controls */
+    #controls {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap; font-size: 0.78rem;
+    }
+    #controls label { color: #7986a0; }
+
+    .ctrl-btn {
+      background: #1a1f35; border: 1px solid #1e2a40;
+      border-radius: 6px; padding: 0.35rem 1rem;
+      font-family: inherit; font-size: 0.78rem;
+      cursor: pointer; color: #7986a0;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .ctrl-btn:disabled { opacity: 0.3; cursor: default; }
+    #btn-start:not(:disabled):hover { border-color: #4caf7d; color: #4caf7d; }
+    #btn-pause:not(:disabled):hover { border-color: #e0a832; color: #e0a832; }
+    #btn-stop:not(:disabled):hover  { border-color: #e05252; color: #e05252; }
+    #btn-start.active { border-color: #4caf7d; color: #4caf7d; background: #0d1f18; }
+    #btn-pause.active { border-color: #e0a832; color: #e0a832; background: #1f1a0d; }
+    #btn-stop.active  { border-color: #e05252; color: #e05252; background: #1f0d0d; }
+
+    .noise-row { display: flex; align-items: center; gap: 0.7rem; }
+    #noise-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 120px; height: 4px; border-radius: 2px;
+      background: linear-gradient(to right, #4caf7d 0%, #e05252 100%);
+      outline: none; cursor: pointer;
+    }
+    #noise-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #c9d1e0; border: 2px solid #0f1525; cursor: pointer;
+    }
+    #noise-val { min-width: 3.2em; color: #a0b4d0; font-weight: 600; }
+
+    /* Leaderboard */
+    #leaderboard {
+      width: 220px; flex-shrink: 0;
+      background: #0f1525; border: 1px solid #1e2a40;
+      border-radius: 12px; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    #leaderboard h2 {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em; color: #7986a0;
+      text-transform: uppercase;
+      border-bottom: 1px solid #1a2235;
+      padding-bottom: 0.5rem;
+    }
+    #lb-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .lb-entry {
+      display: grid;
+      grid-template-columns: 1.4rem 1fr auto;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 5px;
+      background: #131828;
+      border: 1px solid #1a2235;
+    }
+    .lb-entry.lb-new { border-color: #4caf7d44; background: #0d1f18; }
+    .lb-rank { color: #556; font-size: 0.65rem; text-align: center; }
+    .lb-rank.gold   { color: #ffd700; }
+    .lb-rank.silver { color: #aaa; }
+    .lb-rank.bronze { color: #cd7f32; }
+    .lb-state { color: #7c4dff; font-weight: 600; letter-spacing: 0.04em; }
+    .lb-score { text-align: right; color: #556; font-size: 0.68rem; line-height: 1.4; }
+    .lb-score span { display: block; }
+    .lb-score .lb-wrong-0 { color: #4caf7d; }
+    .lb-score .lb-wrong-bad { color: #e0a832; }
+    #lb-empty { font-size: 0.72rem; color: #2a3550; text-align: center; padding: 1rem 0; }
+
+    footer {
+      margin-top: 1.5rem; font-size: 0.68rem;
+      color: #2a3550; text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      #main-row { flex-direction: column; }
+      #leaderboard { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Grover's Algorithm — Quantum Oracle Game</h1>
+  <p>The quantum oracle is amplifying one hidden state. Watch the histogram and click the bar you think it is.</p>
+</header>
+
+<div id="status-bar">
+  <div class="badge">
+    <div class="dot disconnected" id="conn-dot"></div>
+  </div>
+  <div class="badge">
+    <span class="stat-label">Shots</span>
+    <span class="stat-value" id="shots-val">0</span>
+  </div>
+  <div class="badge">
+    <span class="stat-label">Wrong guesses</span>
+    <span class="stat-value" id="attempts-val">0</span>
+  </div>
+  <div class="badge">
+    <span class="stat-label">Gate noise</span>
+    <span class="stat-value" id="noise-badge-val">0%</span>
+  </div>
+  <div class="badge" id="penalty-badge">
+    <span class="stat-label">Penalty</span>
+    <span class="stat-value" id="penalty-val">3s</span>
+  </div>
+</div>
+
+<div id="main-row">
+  <div id="left-col">
+    <div id="chart-wrap">
+      <canvas id="histogram"></canvas>
+      <div id="result-overlay">
+        <div id="result-text"></div>
+        <div id="result-sub"></div>
+        <div id="name-row">
+          <input id="name-input" maxlength="3" placeholder="AAA" autocomplete="off" spellcheck="false" />
+          <button id="name-submit">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button class="ctrl-btn" id="btn-start" disabled>Start</button>
+      <button class="ctrl-btn" id="btn-pause">Pause</button>
+      <button class="ctrl-btn" id="btn-stop">Stop</button>
+      <div class="noise-row">
+        <label for="noise-slider">Gate noise:</label>
+        <input type="range" id="noise-slider" min="0" max="50" step="1" value="0" />
+        <span id="noise-val">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <div id="lb-list">
+      <div id="lb-empty">No rounds completed yet.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; 5 qubits / 4 iterations
+</footer>
+
+<script>
+const WS_URL        = 'ws://localhost:8765';
+const PENALTY_MS    = 4000;
+
+const COL_DEFAULT = { bg: 'rgba(42,111,219,0.40)',  border: '#4a8eff' };
+const COL_WRONG   = { bg: 'rgba(60,60,70,0.30)',    border: '#333a4a' };
+const COL_CORRECT = { bg: 'rgba(76,175,77,0.65)',   border: '#4caf7d' };
+
+let chart        = null;
+let ws           = null;
+let labels       = [];
+let counts       = {};
+let totalShots   = 0;
+let wrongGuesses = new Set();
+let gameOver     = false;
+
+// Penalty state
+let penaltyUntil  = 0;
+let penaltyTimer  = null;
+
+// Leaderboard
+let lbEntries   = [];   // { name, target, shots, wrongs }
+let pendingEntry = null;
+
+// ── Penalty ───────────────────────────────────────────────────────────────────
+
+function startPenalty() {
+  penaltyUntil = Date.now() + PENALTY_MS;
+  const badge = document.getElementById('penalty-badge');
+  badge.classList.add('visible');
+  clearInterval(penaltyTimer);
+  penaltyTimer = setInterval(() => {
+    const remaining = Math.ceil((penaltyUntil - Date.now()) / 1000);
+    if (remaining <= 0) {
+      clearInterval(penaltyTimer);
+      badge.classList.remove('visible');
+      document.getElementById('penalty-val').textContent = '3s';
+    } else {
+      document.getElementById('penalty-val').textContent = remaining + 's';
+    }
+  }, 100);
+}
+
+function isPenalty() {
+  return Date.now() < penaltyUntil;
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+function commitLbEntry(name) {
+  if (!pendingEntry) return;
+  const entry = { ...pendingEntry, name: name || '???' };
+  pendingEntry = null;
+  lbEntries.push(entry);
+  lbEntries.sort((a, b) => a.wrongs - b.wrongs || a.shots - b.shots);
+  lbEntries = lbEntries.slice(0, 3);
+  renderLeaderboard(entry);
+  document.getElementById('name-row').style.display = 'none';
+}
+
+function renderLeaderboard(newest) {
+  const list = document.getElementById('lb-list');
+  const empty = document.getElementById('lb-empty');
+  if (!lbEntries.length) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  list.innerHTML = '<div id="lb-empty" style="display:none"></div>';
+
+  const rankSymbols = ['🥇', '🥈', '🥉'];
+  const rankClasses = ['gold', 'silver', 'bronze'];
+
+  lbEntries.forEach((e, i) => {
+    const isNew = (e === newest);
+    const wrongClass = e.wrongs === 0 ? 'lb-wrong-0' : e.wrongs >= 3 ? 'lb-wrong-bad' : '';
+    const div = document.createElement('div');
+    div.className = 'lb-entry' + (isNew ? ' lb-new' : '');
+
+    div.innerHTML = `
+      <span class="lb-rank ${rankClasses[i] || ''}">${rankSymbols[i] || (i + 1)}</span>
+      <span class="lb-state">${e.name}</span>
+      <div class="lb-score">
+        <span>${e.shots.toLocaleString()} shots</span>
+        <span class="${wrongClass}">${e.wrongs} wrong</span>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────────────
+
+function barColors() {
+  return labels.map((_, i) => (
+    wrongGuesses.has(i) ? COL_WRONG : COL_DEFAULT
+  ));
+}
+
+function initChart() {
+  const ctx = document.getElementById('histogram').getContext('2d');
+  if (chart) chart.destroy();
+  const cols = barColors();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Counts',
+        data: labels.map(() => 0),
+        backgroundColor: cols.map(c => c.bg),
+        borderColor:     cols.map(c => c.border),
+        borderWidth: 1,
+        borderRadius: 3,
+      }],
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 0 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#131828', borderColor: '#1e2a40', borderWidth: 1,
+          titleColor: '#a0b4d0', bodyColor: '#7986a0',
+          callbacks: {
+            label: ctx => wrongGuesses.has(ctx.dataIndex)
+              ? `${ctx.parsed.y}  ✗ already guessed`
+              : `${ctx.parsed.y}  — click to guess`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#556', font: { family: 'monospace', size: 10 } }, grid: { color: '#111925' } },
+        y: { ticks: { color: '#556', font: { size: 10 } }, grid: { color: '#111925' },
+             title: { display: true, text: 'Count', color: '#445' } },
+      },
+      onClick(event, elements) {
+        if (!elements.length || gameOver || isPenalty()) return;
+        const idx = elements[0].index;
+        if (wrongGuesses.has(idx)) return;
+        send({ guess: labels[idx] });
+      },
+      onHover(event, elements) {
+        const canvas = document.getElementById('histogram');
+        const canClick = elements.length && !gameOver && !isPenalty()
+                         && !wrongGuesses.has(elements[0]?.index);
+        canvas.style.cursor = canClick ? 'pointer' : 'default';
+      },
+    },
+  });
+}
+
+function updateCounts() {
+  if (!chart) return;
+  chart.data.datasets[0].data = labels.map(l => counts[l] || 0);
+  chart.update('none');
+}
+
+function paintBar(idx, col) {
+  if (!chart) return;
+  chart.data.datasets[0].backgroundColor[idx] = col.bg;
+  chart.data.datasets[0].borderColor[idx]      = col.border;
+  chart.update('none');
+}
+
+// ── Overlay ───────────────────────────────────────────────────────────────────
+
+function showWin(targetBs) {
+  const ov = document.getElementById('result-overlay');
+  document.getElementById('result-text').textContent = `|${targetBs}⟩  ✓`;
+  document.getElementById('result-sub').textContent  =
+    `Found in ${totalShots.toLocaleString()} shots · ${wrongGuesses.size} wrong guess${wrongGuesses.size === 1 ? '' : 'es'}`;
+  const nameRow = document.getElementById('name-row');
+  const nameInput = document.getElementById('name-input');
+  nameRow.style.display = 'flex';
+  nameInput.value = '';
+  nameInput.focus();
+  ov.className = 'show win';
+}
+
+function hideOverlay() {
+  document.getElementById('result-overlay').className = '';
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+
+function flashDot() {
+  const dot = document.getElementById('conn-dot');
+  dot.classList.add('flash');
+  setTimeout(() => dot.classList.remove('flash'), 120);
+}
+
+function setConnected(ok) {
+  document.getElementById('conn-dot').className = 'dot ' + (ok ? 'connected' : 'disconnected');
+}
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+  ws.onopen  = () => setConnected(true);
+  ws.onclose = () => { setConnected(false); setTimeout(connect, 2000); };
+  ws.onerror = () => ws.close();
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'init') {
+      labels       = msg.labels;
+      counts       = {};
+      totalShots   = 0;
+      wrongGuesses = new Set();
+      gameOver     = false;
+      penaltyUntil = 0;
+      clearInterval(penaltyTimer);
+      document.getElementById('penalty-badge').classList.remove('visible');
+      document.getElementById('shots-val').textContent    = '0';
+      document.getElementById('attempts-val').textContent = '0';
+      const noisePct = Math.round(msg.noise_p * 100);
+      document.getElementById('noise-badge-val').textContent = noisePct + '%';
+      document.getElementById('noise-badge-val').style.color =
+        noisePct === 0 ? '#4caf7d' : noisePct < 20 ? '#e0a832' : '#e05252';
+      setStatus(msg.status);
+      pendingEntry = null;
+      document.getElementById('name-row').style.display = 'none';
+      hideOverlay();
+      initChart();
+      return;
+    }
+
+    if (msg.type === 'status') { setStatus(msg.status); return; }
+
+    if (msg.type === 'shot') {
+      counts     = msg.counts;
+      totalShots = msg.total;
+      document.getElementById('shots-val').textContent = totalShots.toLocaleString();
+      flashDot();
+      updateCounts();
+      return;
+    }
+
+    if (msg.type === 'guess_result') {
+      setStatus(msg.status);
+      if (msg.correct) {
+        const idx = labels.indexOf(msg.target);
+        gameOver = true;
+        paintBar(idx, COL_CORRECT);
+        pendingEntry = { target: msg.target, shots: totalShots, wrongs: wrongGuesses.size };
+        showWin(msg.target);
+      } else {
+        const idx = labels.indexOf(msg.guessed);
+        wrongGuesses.add(idx);
+        document.getElementById('attempts-val').textContent = wrongGuesses.size;
+        paintBar(idx, COL_WRONG);
+        startPenalty();
+      }
+      return;
+    }
+  };
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function setStatus(status) {
+  const s = document.getElementById('btn-start');
+  const p = document.getElementById('btn-pause');
+  const x = document.getElementById('btn-stop');
+  s.disabled = (status === 'running');
+  p.disabled = (status !== 'running');
+  x.disabled = (status === 'stopped');
+  s.classList.toggle('active', status === 'running');
+  p.classList.toggle('active', status === 'paused');
+  x.classList.toggle('active', status === 'stopped');
+}
+
+// Name input
+const nameInput  = document.getElementById('name-input');
+const nameSubmit = document.getElementById('name-submit');
+
+nameInput.addEventListener('input', () => {
+  nameInput.value = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') commitLbEntry(nameInput.value || '???');
+});
+nameSubmit.addEventListener('click', () => commitLbEntry(nameInput.value || '???'));
+
+document.getElementById('btn-start').addEventListener('click', () => send({ cmd: 'start' }));
+document.getElementById('btn-pause').addEventListener('click', () => send({ cmd: 'pause' }));
+document.getElementById('btn-stop').addEventListener('click',  () => send({ cmd: 'stop'  }));
+
+const noiseSlider = document.getElementById('noise-slider');
+const noiseValEl  = document.getElementById('noise-val');
+noiseSlider.addEventListener('input', () => {
+  const pct = parseInt(noiseSlider.value);
+  noiseValEl.textContent = pct + '%';
+  noiseValEl.style.color = pct === 0 ? '#4caf7d' : pct < 20 ? '#e0a832' : '#e05252';
+});
+noiseSlider.addEventListener('change', () => {
+  send({ noise: parseInt(noiseSlider.value) / 100 });
+});
+
+connect();
+</script>
+</body>
+</html>
