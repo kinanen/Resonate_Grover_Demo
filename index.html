@@ -805,6 +805,7 @@ connect();
   const GRID    = 256;                                     // √N
   const G_ITERS = Math.round(Math.PI / 4 * Math.sqrt(N)); // ≈ 201
   const TICK_MS = 22;                                      // ms per tick
+  const G_STEP  = 4;                                       // Grover iterations per tick
   const C_BATCH = Math.ceil(N / G_ITERS);                  // ≈ 327 checks / tick
   const THETA   = Math.asin(1 / Math.sqrt(N));             // arcsin(1/256)
 
@@ -912,7 +913,7 @@ connect();
       ctxCl.putImageData(imgCl, 0, 0);
       document.getElementById('cl-q').textContent = clPos.toLocaleString();
 
-      if (clPos >= N) {
+      if (clFoundAt > 0) {
         clDone = true;
         document.getElementById('cl-msg').textContent =
           'Found at query ' + clFoundAt.toLocaleString() + ' of 65,536';
@@ -921,7 +922,7 @@ connect();
 
     // ── Grover ────────────────────────────────────────────────────────────
     if (!grDone) {
-      grIter++;
+      grIter = Math.min(grIter + G_STEP, G_ITERS);
       renderGrover(grIter);
       document.getElementById('gr-q').textContent = grIter + ' / ' + G_ITERS;
 
