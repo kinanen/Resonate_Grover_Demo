@@ -272,6 +272,47 @@
       .comp-panel canvas { width: 240px; height: 240px; }
     }
 
+    /* ── Demo slide ──────────────────────────────────────────────────────── */
+    #demo-header { text-align: center; margin-bottom: 0.5rem; }
+    #demo-header h2 {
+      font-size: 1.1rem; font-weight: 700;
+      letter-spacing: 0.04em; color: #e8eaf6;
+    }
+    #demo-header p { margin-top: 0.3rem; font-size: 0.72rem; color: #556; }
+    #demo-col {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.8rem;
+      width: 100%; max-width: 780px;
+    }
+    #demo-chart-wrap {
+      background: #0f1525; border: 1px solid #1e2a40;
+      border-radius: 12px; padding: 1.5rem 1.5rem 1rem;
+      position: relative; width: 100%;
+    }
+    #demo-chart-wrap canvas { cursor: crosshair; }
+    #demo-result-overlay {
+      display: none; position: absolute; inset: 0;
+      border-radius: 12px; align-items: center;
+      justify-content: center; flex-direction: column;
+      gap: 0.6rem; pointer-events: none;
+    }
+    #demo-result-overlay.show { display: flex; pointer-events: all; }
+    #demo-result-overlay.win  { background: rgba(10,20,10,0.55); }
+    #demo-result-text {
+      font-size: 2rem; font-weight: 700; letter-spacing: 0.06em;
+    }
+    #demo-result-overlay.win #demo-result-text {
+      color: #4caf7d; text-shadow: 0 0 20px #4caf7d88;
+    }
+    #demo-result-sub { font-size: 0.85rem; color: #7986a0; }
+    #demo-controls {
+      display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+    }
+    #demo-info {
+      display: flex; gap: 1rem; align-items: center;
+      flex-wrap: wrap; justify-content: center; font-size: 0.78rem;
+    }
+
     /* ── Carousel ────────────────────────────────────────────────────────── */
     #carousel {
       width: 100%; max-width: 1160px;
@@ -378,21 +419,6 @@
       <button class="ctrl-btn" id="btn-start" disabled>Start</button>
       <button class="ctrl-btn" id="btn-pause">Pause</button>
       <button class="ctrl-btn" id="btn-stop">Stop</button>
-      <div class="noise-row">
-        <label for="noise-slider">Gate noise:</label>
-        <input type="range" id="noise-slider" class="ctrl-slider" min="0" max="50" step="1" value="0" />
-        <span id="noise-val">0%</span>
-      </div>
-      <div class="noise-row">
-        <label for="qubits-slider">Qubits:</label>
-        <input type="range" id="qubits-slider" class="ctrl-slider" min="2" max="7" step="1" value="5" />
-        <span id="qubits-val">5</span>
-      </div>
-      <div class="noise-row">
-        <label for="iters-slider">Iterations:</label>
-        <input type="range" id="iters-slider" class="ctrl-slider" min="1" max="12" step="1" value="4" />
-        <span id="iters-val">4</span>
-      </div>
     </div>
   </div>
 
@@ -405,7 +431,7 @@
 </div>
 
 <footer>
-  Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; <span id="footer-params">5 qubits / 4 iterations</span>
+  Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; <span id="footer-params">6 qubits / 6 iterations</span>
 </footer>
 
 </div><!-- /slide-game -->
@@ -454,6 +480,46 @@
 
 </div><!-- /slide-comp -->
 
+<!-- ── Slide 3: Low Noise Demo ───────────────────────────────────────────── -->
+<div class="slide" id="slide-demo">
+  <div id="demo-col">
+    <div id="demo-chart-wrap">
+      <canvas id="histogram2"></canvas>
+      <div id="demo-result-overlay">
+        <div id="demo-result-text"></div>
+        <div id="demo-result-sub"></div>
+        <button class="ctrl-btn" id="demo-new-round">New Round</button>
+      </div>
+    </div>
+    <div id="demo-controls">
+      <button class="ctrl-btn" id="demo-start-btn" disabled>Start</button>
+      <button class="ctrl-btn" id="demo-pause-btn">Pause</button>
+      <button class="ctrl-btn" id="demo-stop-btn">Stop</button>
+    </div>
+    <div id="demo-info">
+      <div class="badge">
+        <span class="stat-label">Shots</span>
+        <span class="stat-value" id="demo-shots-val">0</span>
+      </div>
+      <div class="noise-row">
+        <label for="noise-slider">Gate noise:</label>
+        <input type="range" id="noise-slider" class="ctrl-slider" min="0" max="50" step="1" value="13" />
+        <span id="noise-val">13%</span>
+      </div>
+      <div class="noise-row">
+        <label for="qubits-slider">Qubits:</label>
+        <input type="range" id="qubits-slider" class="ctrl-slider" min="2" max="7" step="1" value="6" />
+        <span id="qubits-val">6</span>
+      </div>
+      <div class="noise-row">
+        <label for="iters-slider">Iterations:</label>
+        <input type="range" id="iters-slider" class="ctrl-slider" min="1" max="12" step="1" value="6" />
+        <span id="iters-val">6</span>
+      </div>
+    </div>
+  </div>
+</div><!-- /slide-demo -->
+
 </div><!-- /carousel-track -->
 
 <div id="carousel-nav">
@@ -463,19 +529,23 @@
   <button class="nav-dot" data-slide="1">
     <span class="nav-label">Comparison</span>
   </button>
+  <button class="nav-dot" data-slide="2">
+    <span class="nav-label">Demo</span>
+  </button>
 </div>
 
 </div><!-- /carousel -->
 
 <script>
 const WS_URL        = 'ws://localhost:8765';
-const PENALTY_MS    = 4000;
+const PENALTY_MS    = 3000;
 
 const COL_DEFAULT = { bg: 'rgba(42,111,219,0.40)',  border: '#4a8eff' };
 const COL_WRONG   = { bg: 'rgba(60,60,70,0.30)',    border: '#333a4a' };
 const COL_CORRECT = { bg: 'rgba(76,175,77,0.65)',   border: '#4caf7d' };
 
 let chart        = null;
+let chart2       = null;
 let ws           = null;
 let labels       = [];
 let counts       = {};
@@ -616,10 +686,66 @@ function initChart() {
   });
 }
 
+function initChart2() {
+  const ctx = document.getElementById('histogram2').getContext('2d');
+  if (chart2) chart2.destroy();
+  const cols = barColors();
+  chart2 = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Counts',
+        data: labels.map(() => 0),
+        backgroundColor: cols.map(c => c.bg),
+        borderColor:     cols.map(c => c.border),
+        borderWidth: 1, borderRadius: 3,
+      }],
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 0 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#131828', borderColor: '#1e2a40', borderWidth: 1,
+          titleColor: '#a0b4d0', bodyColor: '#7986a0',
+          callbacks: {
+            label: ctx => wrongGuesses.has(ctx.dataIndex)
+              ? `${ctx.parsed.y}  ✗ already guessed`
+              : `${ctx.parsed.y}  — click to guess`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#556', font: { family: 'monospace', size: 10 } }, grid: { color: '#111925' } },
+        y: { ticks: { color: '#556', font: { size: 10 } }, grid: { color: '#111925' },
+             title: { display: true, text: 'Count', color: '#445' } },
+      },
+      onClick(event, elements) {
+        if (!elements.length || gameOver || isPenalty()) return;
+        const idx = elements[0].index;
+        if (wrongGuesses.has(idx)) return;
+        send({ guess: labels[idx] });
+      },
+      onHover(event, elements) {
+        const canvas = document.getElementById('histogram2');
+        const canClick = elements.length && !gameOver && !isPenalty()
+                         && !wrongGuesses.has(elements[0]?.index);
+        canvas.style.cursor = canClick ? 'pointer' : 'default';
+      },
+    },
+  });
+}
+
 function updateCounts() {
   if (!chart) return;
   chart.data.datasets[0].data = labels.map(l => counts[l] || 0);
   chart.update('none');
+  if (chart2) {
+    chart2.data.datasets[0].data = labels.map(l => counts[l] || 0);
+    chart2.update('none');
+  }
 }
 
 function paintBar(idx, col) {
@@ -627,6 +753,11 @@ function paintBar(idx, col) {
   chart.data.datasets[0].backgroundColor[idx] = col.bg;
   chart.data.datasets[0].borderColor[idx]      = col.border;
   chart.update('none');
+  if (chart2) {
+    chart2.data.datasets[0].backgroundColor[idx] = col.bg;
+    chart2.data.datasets[0].borderColor[idx]      = col.border;
+    chart2.update('none');
+  }
 }
 
 // ── Overlay ───────────────────────────────────────────────────────────────────
@@ -646,6 +777,18 @@ function showWin(targetBs) {
 
 function hideOverlay() {
   document.getElementById('result-overlay').className = '';
+}
+
+function showDemoWin(targetBs) {
+  const ov = document.getElementById('demo-result-overlay');
+  document.getElementById('demo-result-text').textContent = `|${targetBs}⟩  ✓`;
+  document.getElementById('demo-result-sub').textContent  =
+    `Found in ${totalShots.toLocaleString()} shots`;
+  ov.className = 'show win';
+}
+
+function hideDemoOverlay() {
+  document.getElementById('demo-result-overlay').className = '';
 }
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
@@ -684,7 +827,11 @@ function connect() {
       document.getElementById('noise-badge-val').textContent = noisePct + '%';
       document.getElementById('noise-badge-val').style.color =
         noisePct === 0 ? '#4caf7d' : noisePct < 20 ? '#e0a832' : '#e05252';
-      // Sync qubit / iter sliders from server state
+      // Sync all sliders from server state
+      document.getElementById('noise-slider').value = noisePct;
+      document.getElementById('noise-val').textContent = noisePct + '%';
+      document.getElementById('noise-val').style.color =
+        noisePct === 0 ? '#4caf7d' : noisePct < 20 ? '#e0a832' : '#e05252';
       document.getElementById('qubits-slider').value = msg.n_qubits;
       document.getElementById('qubits-val').textContent = msg.n_qubits;
       document.getElementById('iters-slider').value = msg.n_iter;
@@ -695,7 +842,9 @@ function connect() {
       pendingEntry = null;
       document.getElementById('name-row').style.display = 'none';
       hideOverlay();
+      hideDemoOverlay();
       initChart();
+      initChart2();
       return;
     }
 
@@ -704,7 +853,8 @@ function connect() {
     if (msg.type === 'shot') {
       counts     = msg.counts;
       totalShots = msg.total;
-      document.getElementById('shots-val').textContent = totalShots.toLocaleString();
+      document.getElementById('shots-val').textContent      = totalShots.toLocaleString();
+      document.getElementById('demo-shots-val').textContent = totalShots.toLocaleString();
       flashDot();
       updateCounts();
       return;
@@ -716,8 +866,12 @@ function connect() {
         const idx = labels.indexOf(msg.target);
         gameOver = true;
         paintBar(idx, COL_CORRECT);
-        pendingEntry = { target: msg.target, shots: totalShots, wrongs: wrongGuesses.size };
-        showWin(msg.target);
+        if (window.currentCarouselSlide === 2) {
+          showDemoWin(msg.target);
+        } else {
+          pendingEntry = { target: msg.target, shots: totalShots, wrongs: wrongGuesses.size };
+          showWin(msg.target);
+        }
       } else {
         const idx = labels.indexOf(msg.guessed);
         wrongGuesses.add(idx);
@@ -737,15 +891,17 @@ function send(obj) {
 }
 
 function setStatus(status) {
-  const s = document.getElementById('btn-start');
-  const p = document.getElementById('btn-pause');
-  const x = document.getElementById('btn-stop');
-  s.disabled = (status === 'running');
-  p.disabled = (status !== 'running');
-  x.disabled = (status === 'stopped');
-  s.classList.toggle('active', status === 'running');
-  p.classList.toggle('active', status === 'paused');
-  x.classList.toggle('active', status === 'stopped');
+  [['btn-start','demo-start-btn'], ['btn-pause','demo-pause-btn'], ['btn-stop','demo-stop-btn']]
+    .forEach(([id1, id2]) => {
+      const a = document.getElementById(id1);
+      const b = document.getElementById(id2);
+      const isStart  = id1 === 'btn-start';
+      const isPause  = id1 === 'btn-pause';
+      const isStop   = id1 === 'btn-stop';
+      const dis = isStart ? status === 'running' : isPause ? status !== 'running' : status === 'stopped';
+      const act = isStart ? status === 'running' : isPause ? status === 'paused'  : status === 'stopped';
+      [a, b].forEach(el => { el.disabled = dis; el.classList.toggle('active', act); });
+    });
 }
 
 // Name input
@@ -792,6 +948,11 @@ itersSlider.addEventListener('input', () => {
 itersSlider.addEventListener('change', () => {
   send({ n_iter: parseInt(itersSlider.value) });
 });
+
+document.getElementById('demo-new-round').addEventListener('click', () => send({ cmd: 'start' }));
+document.getElementById('demo-start-btn').addEventListener('click', () => send({ cmd: 'start' }));
+document.getElementById('demo-pause-btn').addEventListener('click', () => send({ cmd: 'pause' }));
+document.getElementById('demo-stop-btn').addEventListener('click',  () => send({ cmd: 'stop'  }));
 
 connect();
 </script>
@@ -953,15 +1114,26 @@ connect();
 
 <script>
 // ── Carousel navigation ────────────────────────────────────────────────────
+window.currentCarouselSlide = 0;
+
 (function () {
   const track = document.getElementById('carousel-track');
   const dots  = Array.from(document.querySelectorAll('.nav-dot'));
   let current = 0;
 
   function goTo(n) {
+    const prev = current;
     current = Math.max(0, Math.min(n, dots.length - 1));
+    window.currentCarouselSlide = current;
     track.style.transform = `translateX(-${current * 100}%)`;
     dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+    // Switch noise when entering / leaving the demo slide
+    if (current === 2 && prev !== 2) {
+      send({ noise: 0.09 });
+    } else if (current !== 2 && prev === 2) {
+      send({ noise: 0.13 });
+    }
   }
 
   dots.forEach(dot => {

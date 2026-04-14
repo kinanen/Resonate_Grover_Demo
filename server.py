@@ -90,8 +90,9 @@ def optimal_iters(n_qubits):
 
 # ── WebSocket handler ─────────────────────────────────────────────────────────
 
-DEFAULT_N_QUBITS = 5
-SHOT_INTERVAL    = 0.06   # seconds between shots
+DEFAULT_N_QUBITS = 6
+DEFAULT_NOISE    = 0.08
+SHOT_INTERVAL    = 0.05   # seconds between shots
 MAX_NOISE        = 0.5
 
 
@@ -100,7 +101,7 @@ async def handler(websocket):
     n_states = 2 ** n_qubits
     n_iter   = optimal_iters(n_qubits)
     target   = np.random.randint(n_states)
-    noise_p  = 0.0
+    noise_p  = DEFAULT_NOISE
     counts: dict[str, int] = {}
     total    = 0
     status   = "running"
