@@ -190,6 +190,139 @@
       #main-row { flex-direction: column; }
       #leaderboard { width: 100%; }
     }
+
+    /* ── Classical vs Grover comparison ─────────────────────────────────── */
+    #comp-section {
+      width: 100%; max-width: 1160px;
+      margin-top: 0;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 1.2rem;
+    }
+    #comp-header { text-align: center; }
+    #comp-header h2 {
+      font-size: 1.1rem; font-weight: 700;
+      letter-spacing: 0.04em; color: #e8eaf6;
+    }
+    #comp-header p {
+      margin-top: 0.3rem; font-size: 0.72rem; color: #556;
+    }
+    #comp-row {
+      display: flex; gap: 1.5rem;
+      align-items: center; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .comp-panel {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.6rem;
+      background: #0f1525; border: 1px solid #1e2a40;
+      border-radius: 12px; padding: 1.2rem;
+    }
+    .comp-panel-title {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.08em; color: #7986a0;
+      text-transform: uppercase;
+    }
+    .comp-panel canvas {
+      display: block; width: 288px; height: 288px;
+      image-rendering: pixelated;
+      border: 1px solid #1a2235; border-radius: 3px;
+    }
+    .comp-stat-row {
+      display: flex; align-items: baseline;
+      gap: 0.5rem; font-size: 0.78rem;
+    }
+    .comp-stat-label { color: #556; }
+    .comp-stat-val {
+      color: #a0b4d0; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-size: 1rem; min-width: 6ch; text-align: right;
+    }
+    .comp-msg {
+      font-size: 0.7rem; color: #4caf7d;
+      min-height: 1.1em; letter-spacing: 0.03em;
+      text-align: center;
+    }
+    #comp-mid {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 1.5rem;
+    }
+    #comp-vs {
+      font-size: 1.3rem; font-weight: 700;
+      color: #2a3550; letter-spacing: 0.1em;
+    }
+    #comp-speedup {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.2rem;
+      opacity: 0; transition: opacity 0.8s;
+    }
+    #comp-speedup.visible { opacity: 1; }
+    .speedup-label {
+      font-size: 0.6rem; color: #556;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .speedup-val {
+      font-size: 1.8rem; font-weight: 700;
+      color: #7c4dff;
+      text-shadow: 0 0 16px #7c4dff66;
+      letter-spacing: -0.02em;
+    }
+    @media (max-width: 700px) {
+      #comp-row { flex-direction: column; }
+      #comp-mid { flex-direction: row; }
+      .comp-panel canvas { width: 240px; height: 240px; }
+    }
+
+    /* ── Carousel ────────────────────────────────────────────────────────── */
+    #carousel {
+      width: 100%; max-width: 1160px;
+      overflow: hidden;
+      position: relative;
+    }
+    #carousel-track {
+      display: flex;
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
+    }
+    .slide {
+      min-width: 100%; flex-shrink: 0;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 0 0 0.5rem;
+    }
+    #carousel-nav {
+      display: flex; gap: 2rem;
+      justify-content: center;
+      margin-top: 1.4rem;
+    }
+    .nav-dot {
+      background: none; border: none;
+      cursor: pointer; padding: 0.3rem;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.35rem;
+    }
+    .nav-dot::before {
+      content: '';
+      display: block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #2a3550;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-dot.active::before {
+      background: #7c4dff;
+      transform: scale(1.4);
+      box-shadow: 0 0 6px #7c4dff88;
+    }
+    .nav-dot:hover::before  { background: #4a4a6a; }
+    .nav-label {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.6rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #2a3550;
+      transition: color 0.2s;
+    }
+    .nav-dot.active .nav-label { color: #7986a0; }
+    .nav-dot:hover .nav-label  { color: #445; }
+
   </style>
 </head>
 <body>
@@ -198,6 +331,12 @@
   <h1>Grover's Algorithm — Quantum Oracle Game</h1>
   <p>The quantum oracle is amplifying one hidden state. Watch the histogram and click the bar you think it is.</p>
 </header>
+
+<div id="carousel">
+<div id="carousel-track">
+
+<!-- ── Slide 1: Game ─────────────────────────────────────────────────────── -->
+<div class="slide" id="slide-game">
 
 <div id="status-bar">
   <div class="badge">
@@ -268,6 +407,65 @@
 <footer>
   Depolarizing noise model &nbsp;·&nbsp; Grover diffusion + phase-flip oracle &nbsp;·&nbsp; <span id="footer-params">5 qubits / 4 iterations</span>
 </footer>
+
+</div><!-- /slide-game -->
+
+<!-- ── Slide 2: Comparison ───────────────────────────────────────────────── -->
+<div class="slide" id="slide-comp">
+
+<!-- ── Classical vs Grover's comparison ──────────────────────────────────── -->
+<section id="comp-section">
+  <div id="comp-header">
+    <h2>Classical vs Grover's Algorithm</h2>
+    <p>16-bit search space &nbsp;·&nbsp; 65,536 states &nbsp;·&nbsp; one hidden target &nbsp;·&nbsp; no noise</p>
+  </div>
+  <div id="comp-row">
+
+    <div class="comp-panel">
+      <div class="comp-panel-title">Classical Random Search</div>
+      <canvas id="canvas-cl" width="256" height="256"></canvas>
+      <div class="comp-stat-row">
+        <span class="comp-stat-label">Queries</span>
+        <span class="comp-stat-val" id="cl-q">0</span>
+      </div>
+      <div class="comp-msg" id="cl-msg">&nbsp;</div>
+    </div>
+
+    <div id="comp-mid">
+      <div id="comp-vs">VS</div>
+      <div id="comp-speedup">
+        <div class="speedup-label">Quantum speedup</div>
+        <div class="speedup-val" id="sp-val">—</div>
+      </div>
+    </div>
+
+    <div class="comp-panel">
+      <div class="comp-panel-title">Grover's Algorithm</div>
+      <canvas id="canvas-gr" width="256" height="256"></canvas>
+      <div class="comp-stat-row">
+        <span class="comp-stat-label">Oracle calls</span>
+        <span class="comp-stat-val" id="gr-q">0</span>
+      </div>
+      <div class="comp-msg" id="gr-msg">&nbsp;</div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /slide-comp -->
+
+</div><!-- /carousel-track -->
+
+<div id="carousel-nav">
+  <button class="nav-dot active" data-slide="0">
+    <span class="nav-label">Game</span>
+  </button>
+  <button class="nav-dot" data-slide="1">
+    <span class="nav-label">Comparison</span>
+  </button>
+</div>
+
+</div><!-- /carousel -->
 
 <script>
 const WS_URL        = 'ws://localhost:8765';
@@ -596,6 +794,185 @@ itersSlider.addEventListener('change', () => {
 });
 
 connect();
+</script>
+
+<script>
+// ── Classical vs Grover's comparison animation (16-bit / 65,536 states) ──
+(function () {
+  'use strict';
+
+  const N       = 65536;                                   // 2¹⁶
+  const GRID    = 256;                                     // √N
+  const G_ITERS = Math.round(Math.PI / 4 * Math.sqrt(N)); // ≈ 201
+  const TICK_MS = 22;                                      // ms per tick
+  const C_BATCH = Math.ceil(N / G_ITERS);                  // ≈ 327 checks / tick
+  const THETA   = Math.asin(1 / Math.sqrt(N));             // arcsin(1/256)
+
+  let target, clOrder, clPos, clFoundAt, grIter, grDone, clDone, tid;
+
+  const ctxCl = document.getElementById('canvas-cl').getContext('2d');
+  const ctxGr = document.getElementById('canvas-gr').getContext('2d');
+  let imgCl;
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+  }
+
+  function renderGrover(k) {
+    const angle   = (2 * k + 1) * THETA;
+    const tAmp    = Math.sin(angle);       // target amplitude: 0 → 1
+    const bgDecay = Math.max(0, Math.cos(angle)); // background factor: 1 → 0
+
+    // Fill background — dim blue that fades to black as amplitude concentrates
+    const bBg = Math.round(bgDecay * 60);
+    ctxGr.fillStyle = `rgb(${(bBg * 0.1) | 0},${(bBg * 0.2) | 0},${bBg})`;
+    ctxGr.fillRect(0, 0, GRID, GRID);
+
+    // Target pixel: grows from background colour to bright cyan-green
+    const tx = target % GRID;
+    const ty = (target / GRID) | 0;
+
+    if (k >= G_ITERS) {
+      // Completion — 3×3 green marker
+      ctxGr.fillStyle = '#4caf7d';
+      ctxGr.fillRect(Math.max(0, tx - 1), Math.max(0, ty - 1), 3, 3);
+    } else {
+      const r = Math.min(255, Math.round(tAmp * 150 + (bBg * 0.1)));
+      const g = Math.min(255, Math.round(tAmp * 255 + (bBg * 0.2)));
+      const b = Math.min(255, Math.round(tAmp * 180 + bBg));
+      ctxGr.fillStyle = `rgb(${r},${g},${b})`;
+      ctxGr.fillRect(tx, ty, 1, 1);
+    }
+  }
+
+  function reset() {
+    if (tid) { clearInterval(tid); tid = null; }
+
+    target = (Math.random() * N) | 0;
+
+    clOrder = new Uint32Array(N);
+    for (let i = 0; i < N; i++) clOrder[i] = i;
+    shuffle(clOrder);
+
+    clPos = 0; clFoundAt = -1;
+    grIter = 0; grDone = false; clDone = false;
+
+    // Classical canvas — dark background
+    imgCl = ctxCl.createImageData(GRID, GRID);
+    const d = imgCl.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i] = 10; d[i + 1] = 14; d[i + 2] = 26; d[i + 3] = 255;
+    }
+    ctxCl.putImageData(imgCl, 0, 0);
+
+    renderGrover(0);
+
+    document.getElementById('cl-q').textContent   = '0';
+    document.getElementById('gr-q').textContent   = '0 / ' + G_ITERS;
+    document.getElementById('cl-msg').innerHTML   = '&nbsp;';
+    document.getElementById('gr-msg').innerHTML   = '&nbsp;';
+    document.getElementById('comp-speedup').classList.remove('visible');
+    document.getElementById('sp-val').textContent = '—';
+
+    tid = setInterval(tick, TICK_MS);
+  }
+
+  function tick() {
+    // ── Classical ─────────────────────────────────────────────────────────
+    if (!clDone) {
+      const end = Math.min(clPos + C_BATCH, N);
+      const d   = imgCl.data;
+
+      for (let i = clPos; i < end; i++) {
+        const s  = clOrder[i];
+        const px = s % GRID;
+        const py = (s / GRID) | 0;
+
+        if (s === target) {
+          if (clFoundAt < 0) clFoundAt = i + 1;  // 1-indexed query number
+          // 3×3 green marker
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const nx = px + dx, ny = py + dy;
+              if (nx >= 0 && nx < GRID && ny >= 0 && ny < GRID) {
+                const o = (ny * GRID + nx) * 4;
+                d[o] = 76; d[o + 1] = 175; d[o + 2] = 125; d[o + 3] = 255;
+              }
+            }
+          }
+        } else {
+          const o = (py * GRID + px) * 4;
+          d[o] = 35; d[o + 1] = 42; d[o + 2] = 60; d[o + 3] = 255;
+        }
+      }
+
+      clPos = end;
+      ctxCl.putImageData(imgCl, 0, 0);
+      document.getElementById('cl-q').textContent = clPos.toLocaleString();
+
+      if (clPos >= N) {
+        clDone = true;
+        document.getElementById('cl-msg').textContent =
+          'Found at query ' + clFoundAt.toLocaleString() + ' of 65,536';
+      }
+    }
+
+    // ── Grover ────────────────────────────────────────────────────────────
+    if (!grDone) {
+      grIter++;
+      renderGrover(grIter);
+      document.getElementById('gr-q').textContent = grIter + ' / ' + G_ITERS;
+
+      if (grIter >= G_ITERS) {
+        grDone = true;
+        document.getElementById('gr-msg').textContent =
+          'Found in ' + G_ITERS + ' oracle calls \u2713';
+      }
+    }
+
+    // ── Both complete ─────────────────────────────────────────────────────
+    if (grDone && clDone) {
+      clearInterval(tid); tid = null;
+
+      if (clFoundAt > 0) {
+        const speedup = Math.round(clFoundAt / G_ITERS);
+        document.getElementById('sp-val').textContent = speedup.toLocaleString() + '\u00d7';
+        document.getElementById('comp-speedup').classList.add('visible');
+      }
+
+      setTimeout(reset, 4500);
+    }
+  }
+
+  reset();
+}());
+</script>
+
+<script>
+// ── Carousel navigation ────────────────────────────────────────────────────
+(function () {
+  const track = document.getElementById('carousel-track');
+  const dots  = Array.from(document.querySelectorAll('.nav-dot'));
+  let current = 0;
+
+  function goTo(n) {
+    current = Math.max(0, Math.min(n, dots.length - 1));
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => goTo(parseInt(dot.dataset.slide)));
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') goTo(current + 1);
+    if (e.key === 'ArrowLeft')  goTo(current - 1);
+  });
+}());
 </script>
 </body>
 </html>
